@@ -215,6 +215,7 @@ add_compile_options( "$<$<CONFIG:RELEASE>:-DFINAL>" )
 find_package( fmt                         CONFIG REQUIRED )
 find_package( unofficial-nativefiledialog CONFIG REQUIRED )
 find_package( benchmark                   CONFIG REQUIRED )
+find_package( Eigen3                      CONFIG REQUIRED )
 
 
 add_executable( hello
@@ -237,17 +238,17 @@ if( USE_IPO )
     set_property(TARGET bench PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
+
 target_include_directories( hello
         PRIVATE
         include
-        ${FMT_INCLUDE_DIR}
 )
 
 target_include_directories( bench
         PRIVATE
         include
-        ${FMT_INCLUDE_DIR}
 )
+
 
 target_link_libraries( hello
         PRIVATE
@@ -261,6 +262,7 @@ target_link_libraries( bench
         $<IF:${FMT_HEADER_ONLY},                        fmt::fmt-header-only,   fmt::fmt>
         $<TARGET_NAME_IF_EXISTS:unofficial::nativefiledialog::nfd>
         $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
+        $<TARGET_NAME_IF_EXISTS:Eigen3::Eigen>
         $<TARGET_NAME_IF_EXISTS:benchmark::benchmark>
         $<TARGET_NAME_IF_EXISTS:benchmark::benchmark_main>
 )

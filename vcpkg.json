@@ -12,6 +12,9 @@
     },
     {
       "name": "benchmark"
+    },
+    {
+      "name" : "eigen3"
     }
   ]
 }
