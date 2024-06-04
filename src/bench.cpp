@@ -1,6 +1,8 @@
-#include <global.h>
+#include "global.h"
 
 #include <benchmark/benchmark.h>
+
+using namespace JanSordid::Core;
 
 static void BM_CreateString( benchmark::State & state )
 {
@@ -9,13 +11,13 @@ static void BM_CreateString( benchmark::State & state )
 	for( auto _ : state )
 	{
 		// Create strings with increasing size, via ctor( size, char )
-		const String sizedString( size,'x' );
+		String sizedString( size,'x' );
 		benchmark::DoNotOptimize( sizedString );
 	}
 }
 
 BENCHMARK( BM_CreateString )
 	->RangeMultiplier( 2 )
-	->Range( 1, 8<<10 );
+	->Range( 1, 1<<13 );
 
 BENCHMARK_MAIN();
