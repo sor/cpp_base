@@ -47,7 +47,10 @@ namespace JanSordid::Core
 	using uint  = unsigned int;
 	using std::byte;
 
-	using string        = std::string;
+	using f32   = float;
+	using f64   = double;
+
+    using string        = std::string;
 	using string_view   = std::string_view;
 	using String        = std::string;
 	using StringView    = std::string_view;

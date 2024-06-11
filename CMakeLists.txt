@@ -175,6 +175,16 @@ else()
         set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Wno-unknown-pragmas" )
     endif()
 
+    # Only build for this machine
+    set( CMAKE_C_FLAGS           "${CMAKE_C_FLAGS}           -march=native" )
+    set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -march=native" )
+
+    if( CLANG )
+        # Get messages from the vectorizer
+        #set( CMAKE_C_FLAGS       "${CMAKE_C_FLAGS}           -Rpass=loop-vectorize" )
+        #set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Rpass=loop-vectorize" )
+    endif()
+
     # Default to do some minor optimizations of debug builds
     set( CMAKE_C_FLAGS_DEBUG     "${CMAKE_C_FLAGS_DEBUG}     -Og" )
     set( CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}   -Og" )
@@ -186,9 +196,14 @@ else()
     # CARE: Here be Dragons
     #set( CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE}   -ffast-math" )
     #set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math" )
+
+    # Cleanup unnecessary whitespace
+    string(REGEX REPLACE "[ \t\r\n]+" " " CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}" )
+    string(REGEX REPLACE "[ \t\r\n]+" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
 endif()
 
 if( FALSE )
+    message("CMAKE_CXX_FLAGS                (General)   is ${CMAKE_CXX_FLAGS}")
     message("CMAKE_CXX_FLAGS_DEBUG          (Debug)     is ${CMAKE_CXX_FLAGS_DEBUG}")
     message("CMAKE_CXX_FLAGS_RELWITHDEBINFO (Optimized) is ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
     message("CMAKE_CXX_FLAGS_RELEASE        (Final)     is ${CMAKE_CXX_FLAGS_RELEASE}")
@@ -198,8 +213,8 @@ if( CMAKE_BUILD_TYPE MATCHES Debug
         OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo )
     message( STATUS "IPO / LTO disabled (only active in Final builds)" )
 elseif( CMAKE_BUILD_TYPE MATCHES Release )
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT USE_IPO OUTPUT IPO_ERROR )
+    include( CheckIPOSupported )
+    check_ipo_supported( RESULT USE_IPO OUTPUT IPO_ERROR )
     if( USE_IPO )
         message( STATUS "IPO / LTO enabled" )
     else()
@@ -231,6 +246,9 @@ add_executable( bench
         include/global.h
 
         src/bench.cpp
+        src/entity0.cpp
+        src/entity0.h
+        src/entity1.h
 )
 
 if( USE_IPO )
