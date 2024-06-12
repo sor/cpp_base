@@ -19,14 +19,20 @@ namespace JanSordid::ExampleDatamodel {
         benchmark::DoNotOptimize(posY);
     }
 
-    static_assert(  sizeof(Entity0) == 88 );
-    static_assert( alignof(Entity0) ==  8 );
-
-    static_assert(  sizeof(Entity1) == 88 );
-    static_assert( alignof(Entity1) ==  8 );
-
+#if defined( WIN32 ) && defined( _DEBUG )
+    static_assert( sizeof(Entity0)      == 96 );
+    static_assert( sizeof(Entity1)      == 96 );
+    static_assert( sizeof(String)       == 40 );
+    static_assert( sizeof(Vector<char>) == 32 );
+#else
+    static_assert( sizeof(Entity0)      == 88 );
+    static_assert( sizeof(Entity1)      == 88 );
     static_assert( sizeof(String)       == 32 );
     static_assert( sizeof(Vector<char>) == 24 );
+#endif
+
+    static_assert( alignof(Entity0) ==  8 );
+    static_assert( alignof(Entity1) ==  8 );
 }
 
 static void BM_SimulateEntity0( benchmark::State & state )
