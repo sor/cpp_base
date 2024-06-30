@@ -41,7 +41,8 @@ namespace JanSordid::Core
 	using u32   = std::uint32_t;
 	using u64   = std::uint64_t;
 
-	using isize = std::ptrdiff_t;
+    using isize = std::ptrdiff_t;
+    using ssize = std::ptrdiff_t;
 	using usize = std::size_t;
 
 	using uint  = unsigned int;

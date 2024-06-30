@@ -249,6 +249,9 @@ add_executable( bench
         src/entity0.cpp
         src/entity0.h
         src/entity1.h
+        src/entity2.h
+        src/entity3.h
+        src/entity4.h
 )
 
 if( USE_IPO )

@@ -2,8 +2,7 @@
 
 #include "global.h"
 
-namespace JanSordid::ExampleDatamodel {
-
+namespace JanSordid::ExampleDataModel {
     struct Entity1 {
         using    Self = Entity1;
 
@@ -28,8 +27,9 @@ namespace JanSordid::ExampleDatamodel {
         bool     isVisible() const { return _isVisible; }
         bool     hasTarget() const { return _hasTarget; }
 
-        void     setAlive()                   { _isAlive   = true;  }
-        void     setDead()                    { _isAlive   = false; }
+        void     setAlive()                   { _isAlive   = true;  health = 10; }
+        void     setDead()                    { _isAlive   = false; health =  0; }
+        void     doDamage(int value)          { health -= value; }
         void     setVisible(const bool value) { _isVisible = value; }
         void     setTarget(Self * value)      { _hasTarget = true;  target = value; }
         void     unsetTarget()                { _hasTarget = false; }
@@ -42,5 +42,4 @@ namespace JanSordid::ExampleDatamodel {
         void     setCooldown     (const f32 value) { Assert( isAlive()); cd       = value; }
         void     setRespawn      (const f32 value) { Assert(!isAlive()); respawn  = value; }
     };
-
 }

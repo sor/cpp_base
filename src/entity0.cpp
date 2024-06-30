@@ -1,6 +1,6 @@
 #include "entity0.h"
 
-namespace JanSordid::ExampleDatamodel {
+namespace JanSordid::ExampleDataModel {
 
     // Forward decl
     void RenderThing(f32 posX, f32 posY);
@@ -12,17 +12,24 @@ namespace JanSordid::ExampleDatamodel {
         return dist;
     }
 
+    f32 Entity0::calcSqDistTo(const Self & other) const {
+        const f32 diffX = posX - other.posX;
+        const f32 diffY = posY - other.posY;
+        const f32 dist  = diffX * diffX + diffY * diffY;
+        return dist;
+    }
+
     void Entity0::Init(const bool AllAlive, const int ii) {
         (AllAlive || (rand() % 10) == 0)
             ? setAlive()
             : setDead();
-        unsetTarget();
-        health      = isAlive() ? 100 : 0;
+        health      = isAlive() ? 10 : 0;
         posX        = (rand() % 401) - 200;
         posY        = (rand() % 401) - 200;
         velX        = ((rand() % 401) - 200) * 0.01;
         velY        = ((rand() % 401) - 200) * 0.01;
         name        = format("Entity #{}", ii);
+        unsetTarget();
         if( isAlive() )
             setCooldown( 1 );
         else
@@ -83,7 +90,7 @@ namespace JanSordid::ExampleDatamodel {
             Self * closestTarget = nullptr;
 
             //if(0)
-            for ( Self & o: es ) {
+            for ( Self & o : es ) {
                 if (this == &o)
                     continue;
 
@@ -98,7 +105,7 @@ namespace JanSordid::ExampleDatamodel {
                     closestTarget = &o; // safe?
                 }
 
-                // Early exit
+                // Early exit, HACK: hotfix
                 if constexpr (DoEarlyExit)
                     if (closestDist <= TargetRange)
                         break;
@@ -122,7 +129,7 @@ namespace JanSordid::ExampleDatamodel {
             {
                 // Hit
                 setCooldown( 1 );
-                target->health -= 1;
+                target->doDamage( 1 );
 
                 // Killed?
                 if (target->health == 0) {
@@ -151,10 +158,9 @@ namespace JanSordid::ExampleDatamodel {
             if (canRespawn()) {
                 // Respawn timer elapsed, do respawn
                 setAlive();
-                unsetTarget();
-                health = 100;
                 posX   = (rand() % 401) - 200;
                 posY   = (rand() % 401) - 200;
+                unsetTarget();
                 setCooldown(1);
 
                 IfDebug
@@ -177,3 +183,4 @@ namespace JanSordid::ExampleDatamodel {
     template void Entity0::Targeting<false>(const f32 TargetRange, Vector<Self> &es);
     template void Entity0::Targeting<true> (const f32 TargetRange, Vector<Self> &es);
 }
+

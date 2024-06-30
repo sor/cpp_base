@@ -1,9 +1,15 @@
 #include "global.h"
 
 using namespace JanSordid::Core;
+template <u8 N> u64 fib = fib<N-1> + fib<N-2>;
+template <>     u64 fib<1> = 1;
+template <>     u64 fib<0> = 0;
+
 
 int main( [[maybe_unused]] int argc, [[maybe_unused]] char * argv[] )
 {
+    print( "{}", fib<30> );
+
 	const u8 answer = 0b101010;
 	print( "Hello {0}{1}\nThe answer is {2}, not {3} (short: {3:0.3}).\n", "World", "!", answer, numbers::pi );
 
