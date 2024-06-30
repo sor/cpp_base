@@ -21,7 +21,7 @@ namespace JanSordid::ExampleDataModel {
     #pragma pack(push, 4)
     //#pragma align(8) // <- this does not help
     struct Align4or8 {
-        void * ptr;
+        void * ptr; // Assumes 64bit system
         f32    f;
     };
     #pragma pack(pop)
@@ -56,19 +56,27 @@ namespace JanSordid::ExampleDataModel {
     static_assert(  sizeof(Align8AndColor) == 16 );
     static_assert( alignof(Align8AndColor) ==  8 );
 
-//    static_assert(  sizeof(Entity0) == 88 );
-//    static_assert( alignof(Entity0) ==  8 );
+#if defined( WIN32 ) && defined( _DEBUG )
+    static_assert( sizeof(String)       == 40 );
+    static_assert( sizeof(Vector<char>) == 32 );
 
-    static_assert(  sizeof(Entity1) == 88 );
-    static_assert( alignof(Entity1) ==  8 );
-
-    static_assert( sizeof(string)       == 32 );
+    static_assert( sizeof(Entity0)      == 96 );
+    static_assert( sizeof(Entity1)      == 96 );
+//  static_assert( sizeof(Entity2)      == 80 );
+//  static_assert( sizeof(Entity3)      == 72 );
+#else
+    static_assert( sizeof(String)       == 32 );
     static_assert( sizeof(Vector<char>) == 24 );
 
-    static_assert(  sizeof(Entity2) == 72 );
-    static_assert( alignof(Entity2) ==  8 );
+    static_assert( sizeof(Entity0)      == 88 );
+    static_assert( sizeof(Entity1)      == 88 );
+    static_assert( sizeof(Entity2)      == 72 );
+    static_assert( sizeof(Entity3)      == 64 );
+#endif
 
-    static_assert(  sizeof(Entity3) == 64 );
+    static_assert( alignof(Entity0) ==  8 );
+    static_assert( alignof(Entity1) ==  8 );
+    static_assert( alignof(Entity2) ==  8 );
     static_assert( alignof(Entity3) ==  8 );
 
     // Care: Show me later
