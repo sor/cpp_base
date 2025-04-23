@@ -1,20 +1,24 @@
 {
   "name": "cpp-base",
   "version-string": "1.0.0",
-  "builtin-baseline": "1e334d770ac71a89d1c36d51019e60dd08b68f76",
+  "$$$builtin-baseline": "73e9c8e73fbebbfecea912efbda2ec6475134dd1",
   "$builtin-baseline": "a0dcd708623c3a6a292a9c1d18354f67197be114",
+  "$$builtin-baseline": "9760ce6194ef51aa4faf77b6321e1280daa4545c",
   "dependencies": [
     {
       "name": "fmt"
     },
     {
-      "name": "nativefiledialog"
+      "name": "nativefiledialog-extended"
     },
     {
       "name": "benchmark"
     },
     {
-      "name" : "eigen3"
+      "name": "eigen3"
+    },
+    {
+      "name": "nlohmann-json"
     }
   ]
 }
