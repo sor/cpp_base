@@ -1,45 +1,47 @@
 #pragma once
 
-#include "global.h"
+#include "global.hpp"
 
-namespace JanSordid::ExampleDataModel {
-    struct Entity1 {
-        using    Self = Entity1;
+namespace JanSordid::ExampleDataModel
+{
 
-        bool     _isAlive;
-        u16      health;
+	struct Entity1 {
+		using    Self = Entity1;
 
-        bool     _isVisible;
-        f32      posX, posY;
-        f32      velX, velY;
+		bool     _isAlive;
+		u16      health;
 
-        bool     _hasTarget;
-        Self *   target;
+		bool     _isVisible;
+		f32      posX, posY;
+		f32      velX, velY;
 
-        u16      xp;
+		bool     _hasTarget;
+		Self *   target;
 
-        f32      cd;
-        f32      respawn;
+		u16      xp;
 
-        string   name;
+		f32      cd;
+		f32      respawn;
 
-        bool     isAlive()   const { return _isAlive; }
-        bool     isVisible() const { return _isVisible; }
-        bool     hasTarget() const { return _hasTarget; }
+		String   name;
 
-        void     setAlive()                   { _isAlive   = true;  health = 10; }
-        void     setDead()                    { _isAlive   = false; health =  0; }
-        void     doDamage(int value)          { health -= value; }
-        void     setVisible(const bool value) { _isVisible = value; }
-        void     setTarget(Self * value)      { _hasTarget = true;  target = value; }
-        void     unsetTarget()                { _hasTarget = false; }
+		bool     isAlive()   const { return _isAlive; }
+		bool     isVisible() const { return _isVisible; }
+		bool     hasTarget() const { return _hasTarget; }
 
-        bool     isCooldownDone() const { Assert( isAlive()); return cd      <= 0; }
-        bool     canRespawn()     const { Assert(!isAlive()); return respawn <= 0; }
+		void     setAlive()                   { _isAlive   = true;  health = 10; }
+		void     setDead()                    { _isAlive   = false; health =  0; }
+		void     doDamage(int value)          { health -= value; }
+		void     setVisible(const bool value) { _isVisible = value; }
+		void     setTarget(Self * value)      { _hasTarget = true;  target = value; }
+		void     unsetTarget()                { _hasTarget = false; }
 
-        void     progressCooldown(const f32 dt)    { Assert( isAlive()); cd      -= dt; }
-        void     progressRespawn (const f32 dt)    { Assert(!isAlive()); respawn -= dt; }
-        void     setCooldown     (const f32 value) { Assert( isAlive()); cd       = value; }
-        void     setRespawn      (const f32 value) { Assert(!isAlive()); respawn  = value; }
-    };
+		bool     isCooldownDone() const { Assert( isAlive()); return cd      <= 0; }
+		bool     canRespawn()     const { Assert(!isAlive()); return respawn <= 0; }
+
+		void     progressCooldown(const f32 dt)    { Assert( isAlive()); cd      -= dt; }
+		void     progressRespawn (const f32 dt)    { Assert(!isAlive()); respawn -= dt; }
+		void     setCooldown     (const f32 value) { Assert( isAlive()); cd       = value; }
+		void     setRespawn      (const f32 value) { Assert(!isAlive()); respawn  = value; }
+	};
 }

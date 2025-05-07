@@ -1,4 +1,8 @@
-#include "global.h"
+#include "global.hpp"
+
+#include <span>
+
+#include <gtkmm.h>
 
 using namespace JanSordid::Core;
 template <u8 N> u64 fib = fib<N-1> + fib<N-2>;
@@ -26,27 +30,33 @@ int main( [[maybe_unused]] int argc, [[maybe_unused]] char * argv[] )
 		print( "{}", buffer.str() );
 	}
 
-	using NFD = JanSordid::NativeFileDialog;
+	//using NFD = JanSordid::NativeFileDialog;
+	NFD::Guard g;
 
-	NFD::Result fileResult = NFD::OpenDialog();
-	switch( fileResult.code )
+	NFD::UniquePath upath;
+	auto result = NFD::OpenDialog( upath, NFD::EmptyFilter, 0, NFD::EmptyDefaultPath );
+
+	switch( result )
 	{
-		case NFD::Code::Okay:
+		case NFD_OKAY:
 		{
-			print( "The picked file is {}\n", fileResult.path );
+			print( "The picked file is {}\n", upath.get() );
 			print( "Contents of this file are:\n" );
-			std::ifstream file( fileResult.path );
+			std::ifstream file( upath.get() );
 			std::stringstream buffer;
 			buffer << file.rdbuf();
 			print( "{}", buffer.str() );
 			break;
 		}
-		case NFD::Code::Error:
-			print( "An error occurred while picking a file. Error is {}", fileResult.path );
+		case NFD_ERROR:
+			// This can be caused by pressing ESC or Alt+F4
+			print( "An error occurred while picking a file. Error is: {}", NFD_GetError() );
 			break;
 
-		case NFD::Code::Cancel:
+		case NFD_CANCEL:
 			print( "The file picker was canceled" );
 			break;
 	}
+
+	return 0;
 }

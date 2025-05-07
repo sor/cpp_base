@@ -1,7 +1,7 @@
 #include "entity0.h"
 
-namespace JanSordid::ExampleDataModel {
-
+namespace JanSordid::ExampleDataModel
+{
     // Forward decl
     void RenderThing(f32 posX, f32 posY);
 
@@ -24,8 +24,8 @@ namespace JanSordid::ExampleDataModel {
             ? setAlive()
             : setDead();
         health      = isAlive() ? 10 : 0;
-        posX        = (rand() % 401) - 200;
-        posY        = (rand() % 401) - 200;
+        posX        = ((rand() % 401) - 200);
+        posY        = ((rand() % 401) - 200);
         velX        = ((rand() % 401) - 200) * 0.01;
         velY        = ((rand() % 401) - 200) * 0.01;
         name        = format("Entity #{}", ii);

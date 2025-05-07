@@ -1,64 +1,20 @@
 cmake_minimum_required( VERSION 3.20 )
-project( cpp_base )
 
-set( CMAKE_C_STANDARD   17 )
-set( CMAKE_CXX_STANDARD 20 )
+# Unused
+#list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake" )
 
-set( VCPKG_VERBOSE      OFF )
-set( FMT_HEADER_ONLY    1 )
+project( cpp_base LANGUAGES CXX )
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
-set( VCPKG_DIR  "${CMAKE_SOURCE_DIR}/vcpkg/" CACHE PATH "Location of VCPKG" )
+set( CMAKE_C_STANDARD               17  )
+set( CMAKE_CXX_STANDARD             20  )
+set( CMAKE_CXX_STANDARD_REQUIRED    ON  )
+set( CMAKE_CXX_EXTENSIONS           OFF )
 
 find_package( Git REQUIRED )
 
 if( NOT GIT_FOUND )
     message( FATAL_ERROR "git not found" )
 endif()
-
-set( VCPKG_LOCKFILE "build/install-vcpkg.lock" )
-file( LOCK ${VCPKG_LOCKFILE} )
-
-    if( NOT CMAKE_TOOLCHAIN_FILE )
-        message( STATUS "No toolchain file given, installing VCPKG" )
-        #option( UPDATE_VCPKG "Enable updating VCPKG" ON )
-        if( NOT EXISTS "${VCPKG_DIR}" )
-            message( STATUS "Cloning ${VCPKG_DIR}" )
-            execute_process(
-                    COMMAND             ${GIT_EXECUTABLE} clone https://github.com/Microsoft/vcpkg.git ${VCPKG_DIR}
-                    WORKING_DIRECTORY   ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE     GIT_RESULT )
-
-            if( NOT GIT_RESULT EQUAL "0" )
-                message( FATAL_ERROR "Execution of git failed with ${GIT_RESULT}" )
-            endif()
-        #elseif( UPDATE_VCPKG )
-        #    message( STATUS "Pulling ${VCPKG_DIR}" )
-        #    execute_process(
-        #            COMMAND             ${GIT_EXECUTABLE} pull -q
-        #            WORKING_DIRECTORY   ${VCPKG_DIR}
-        #            RESULT_VARIABLE     GIT_RESULT )
-        #
-        #    if( NOT GIT_RESULT EQUAL "0" )
-        #        message( FATAL_ERROR "Execution of git failed with ${GIT_RESULT}" )
-        #    endif()
-        else()
-            message( STATUS "VCPKG is already installed" )
-        endif()
-        return() # nothing more to do for the VCPKG installer
-
-    # WTF: Sometimes this already is the full path, sometimes relative
-    elseif( EXISTS "${CMAKE_TOOLCHAIN_FILE}" OR
-            EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_TOOLCHAIN_FILE}")
-        message( STATUS "Toolchain file exists: ${CMAKE_TOOLCHAIN_FILE}" )
-    else()
-        message( FATAL_ERROR "Toolchain file does not exist yet: ${CMAKE_TOOLCHAIN_FILE}\nRun the 'Install VCPKG' option" )
-        file( LOCK ${VCPKG_LOCKFILE} RELEASE )
-        return()
-    endif()
-
-file( LOCK ${VCPKG_LOCKFILE} RELEASE )
-
 
 set( SYNC_LOCKFILE "build/submodules.lock" )
 file( LOCK ${SYNC_LOCKFILE} )
@@ -80,12 +36,36 @@ file( LOCK ${SYNC_LOCKFILE} )
 
 file( LOCK ${SYNC_LOCKFILE} RELEASE )
 
+if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+    set( IS_DEBUG TRUE )
+else()
+    set( IS_DEBUG FALSE )
+endif()
 
-message("-- Using Compiler:")
-execute_process(
-        COMMAND             ${CMAKE_CXX_COMPILER} --version
-        WORKING_DIRECTORY   ${CMAKE_CURRENT_SOURCE_DIR} )
+option( USE_DeployBinary    "Deploy the binary in the base directory"   OFF )   # For distribution of final product
+option( USE_FMT_HeaderOnly  "Use header-only implementation of FMT"     ON  )
+option( USE_NFD_Native      "Use native encoding in NFD"                OFF )
 
+option( USE_OpenMP          "Use OpenMP"        ON  )   # No-brain SIMD and MP
+option( USE_GTK             "Use GTK"           OFF )   # Cross platform GUI Toolkit
+option( USE_RTTI            "Use RTTI"          ON  )   # Don't need dynamic_cast or type_id? Then don't pay for them
+option( USE_Exceptions      "Use Exceptions"    ON  )   # Don't need exceptions? Then don't pay for them
+
+set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
+
+find_package( fmt           CONFIG REQUIRED )
+find_package( nfd           CONFIG REQUIRED )
+find_package( benchmark     CONFIG REQUIRED )
+find_package( nlohmann_json CONFIG REQUIRED )
+if( USE_OpenMP )
+    find_package( OpenMP           REQUIRED )
+endif()
+if( USE_GTK )
+    find_package( PkgConfig REQUIRED )
+    pkg_check_modules( GTKMM_VARS REQUIRED IMPORTED_TARGET gtkmm-4.0 )
+endif()
 
 # Why does MSVC exist, but not CLANG or GCC?
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
@@ -94,13 +74,34 @@ elseif( CMAKE_CXX_COMPILER_ID MATCHES "GNU" )
     set( GCC 1 )
 endif()
 
-option( USE_OpenMP "Use OpenMP" ON )
-if( USE_OpenMP )
-    find_package( OpenMP )
+
+add_compile_definitions(
+        $<$<CONFIG:DEBUG>:_DEBUG>               # not DEBUG because of a stupid old define
+        $<$<CONFIG:RELWITHDEBINFO>:OPTIMIZED>
+        $<$<CONFIG:RELEASE>:FINAL> )
+
+
+if( WIN32 ) # Not only MSVC, also Clang on Windows
+    add_compile_definitions(
+            NOMINMAX
+            WIN32_LEAN_AND_MEAN
+            _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1
+    )
 endif()
 
-option( USE_RTTI       "Use RTTI"       ON )    # Don't need dynamic_cast or type_id? Then don't pay for them
-option( USE_Exceptions "Use Exceptions" ON )    # Don't need exceptions? Then don't pay for them
+if( GCC OR CLANG )
+    add_compile_definitions(
+            _GLIBCXX_USE_DEPRECATED=0
+            _LIBCPP_ENABLE_DEPRECATION_WARNINGS=1
+    )
+endif()
+
+
+message( STATUS "-- Using Compiler:")
+execute_process(
+        COMMAND             ${CMAKE_CXX_COMPILER} --version
+        WORKING_DIRECTORY   ${CMAKE_CURRENT_SOURCE_DIR} )
+
 
 if( MSVC )
     add_compile_options( /W4 /wd4100 /we4456 /utf-8 ) #  no char8_t: /Zc:char8_t-  - whole program optimization: /GL
@@ -121,10 +122,13 @@ else()
     set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -Wall -Wextra -Werror=parentheses -Werror=uninitialized -Werror=return-type -Werror=unused-result" )
 
     set( CMAKE_C_FLAGS           "${CMAKE_C_FLAGS}           -Wno-unused-parameter" )   # baseclass functions have plenty unused parameters
-    set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -Wno-unused-parameter" )   # baseclass functions have plenty unused parameters
+    set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -Wno-unused-parameter -Wno-c++98-compat" )
 
     set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -Werror=deprecated-copy -Werror=deprecated-copy-dtor" )
     set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -Woverloaded-virtual" )
+
+    set( CMAKE_C_FLAGS       "${CMAKE_C_FLAGS}           -Wno-unknown-pragmas" )
+    set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Wno-unknown-pragmas" )
 
     if( GCC )
         set( CMAKE_C_FLAGS       "${CMAKE_C_FLAGS}           -Wshadow -Werror=shadow=local" )
@@ -146,8 +150,8 @@ else()
         set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Wdelete-non-virtual-dtor -Wdeprecated-dynamic-exception-spec -Wdeprecated-implementations" )
         #set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Wdeprecated-literal-operator -Wdeprecated-redundant-constexpr-static-def" )
 
-        set( CMAKE_C_FLAGS       "${CMAKE_C_FLAGS}           -Wno-unknown-attributes" ) # clang 15 does not know [[(un)likely]]
-        set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Wno-unknown-attributes" ) # clang 15 does not know [[(un)likely]]
+        #set( CMAKE_C_FLAGS       "${CMAKE_C_FLAGS}           -Wno-unknown-attributes" ) # clang 15 does not know [[(un)likely]]
+        #set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Wno-unknown-attributes" ) # clang 15 does not know [[(un)likely]]
 
         set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Werror=inconsistent-missing-override" )
         set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Wweak-vtables" )
@@ -223,28 +227,21 @@ elseif( CMAKE_BUILD_TYPE MATCHES Release )
     endif()
 endif()
 
-add_compile_options( "$<$<CONFIG:DEBUG>:-D_DEBUG>" ) # not DEBUG because of a stupid old define
-add_compile_options( "$<$<CONFIG:RELWITHDEBINFO>:-DOPTIMIZED>" )
-add_compile_options( "$<$<CONFIG:RELEASE>:-DFINAL>" )
-
-
-find_package( fmt                         CONFIG REQUIRED )
-find_package( unofficial-nativefiledialog CONFIG REQUIRED )
-find_package( benchmark                   CONFIG REQUIRED )
-find_package( Eigen3                      CONFIG REQUIRED )
-
 
 add_executable( hello
-        include/global.h
-        include/nfdpp.h
+        src/sor/core.cpp
+        src/sor/core.hpp
 
-        include/nfdpp.cpp
+        src/global.hpp
 
         src/hello.cpp
 )
 
 add_executable( bench
-        include/global.h
+        src/sor/core.cpp
+        src/sor/core.hpp
+
+        src/global.hpp
 
         src/bench.cpp
         src/entity0.cpp
@@ -255,15 +252,26 @@ add_executable( bench
         src/entity4.h
 )
 
-if( USE_IPO )
-    set_property(TARGET hello PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-    set_property(TARGET bench PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
-
+set_property(TARGET hello PROPERTY INTERPROCEDURAL_OPTIMIZATION ${USE_IPO})
+set_property(TARGET bench PROPERTY INTERPROCEDURAL_OPTIMIZATION ${USE_IPO})
 
 target_include_directories( hello
         PRIVATE
         include
+
+        #${GTKMM_INCLUDE_DIRS}
+        ${GTKMM_VARS_INCLUDE_DIRS}
+        #include/gtkmm-4.0/gtkmm
+)
+
+target_link_libraries( hello
+        PRIVATE
+        $<IF:$<BOOL:${USE_FMT_HeaderOnly}>, fmt::fmt-header-only, fmt::fmt>
+
+        $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
+        $<TARGET_NAME_IF_EXISTS:nfd::nfd>
+
+        $<TARGET_NAME_IF_EXISTS:PkgConfig::GTKMM_VARS>
 )
 
 target_include_directories( bench
@@ -271,20 +279,14 @@ target_include_directories( bench
         include
 )
 
-
-target_link_libraries( hello
-        PRIVATE
-        $<IF:${FMT_HEADER_ONLY},                        fmt::fmt-header-only,   fmt::fmt>
-        $<TARGET_NAME_IF_EXISTS:unofficial::nativefiledialog::nfd>
-        $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
-)
-
 target_link_libraries( bench
         PRIVATE
-        $<IF:${FMT_HEADER_ONLY},                        fmt::fmt-header-only,   fmt::fmt>
-        $<TARGET_NAME_IF_EXISTS:unofficial::nativefiledialog::nfd>
+        $<IF:$<BOOL:${USE_FMT_HeaderOnly}>, fmt::fmt-header-only, fmt::fmt>
+        $<TARGET_NAME_IF_EXISTS:nfd::nfd>
+
         $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
         $<TARGET_NAME_IF_EXISTS:Eigen3::Eigen>
+
         $<TARGET_NAME_IF_EXISTS:benchmark::benchmark>
         $<TARGET_NAME_IF_EXISTS:benchmark::benchmark_main>
 )
