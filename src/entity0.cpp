@@ -1,4 +1,4 @@
-#include "entity0.h"
+#include "entity0.hpp"
 
 namespace JanSordid::ExampleDataModel
 {
@@ -19,16 +19,16 @@ namespace JanSordid::ExampleDataModel
         return dist;
     }
 
-    void Entity0::Init(const bool AllAlive, const int ii) {
-        (AllAlive || (rand() % 10) == 0)
+    void Entity0::Init(const bool allAlive, const int ii) {
+        (allAlive || (rand() % 10) == 0)
             ? setAlive()
             : setDead();
-        health      = isAlive() ? 10 : 0;
-        posX        = ((rand() % 401) - 200);
-        posY        = ((rand() % 401) - 200);
-        velX        = ((rand() % 401) - 200) * 0.01;
-        velY        = ((rand() % 401) - 200) * 0.01;
-        name        = format("Entity #{}", ii);
+        health = isAlive() ? 10 : 0;
+        posX   = ((rand() % 401) - 200);
+        posY   = ((rand() % 401) - 200);
+        velX   = ((rand() % 401) - 200) * 0.01;
+        velY   = ((rand() % 401) - 200) * 0.01;
+        name   = format("Entity #{}", ii);
         unsetTarget();
         if( isAlive() )
             setCooldown( 1 );
@@ -65,58 +65,63 @@ namespace JanSordid::ExampleDataModel
         }
     }
 
-    template<bool DoEarlyExit>
-    void Entity0::Targeting(const f32 TargetRange, Vector<Self> & es) // this Vector can not be const :(
-    {
-        // Targeting
-        if (hasTarget()) {
-            if (target->isAlive()) {
+	void Entity0::TargetingNeedsReset(const f32 targetRange, DynArray<Self> & es) // this Vector can not be const :(
+	{
+		// Determine if targeting needs to be reset
+		if (!hasTarget())
+			return;
 
-                const f32 dist = calcDistTo( *target );
+		if (target->isAlive()) {
 
-                if (dist > TargetRange) {
-                    // Target moved out of range
-                    unsetTarget();
-                }
-            } else {
-                // Target dead
-                unsetTarget();
-            }
-        }
+			const f32 dist = calcDistTo( *target );
 
-        // Find new target
-        if (!hasTarget()) {
-            f32    closestDist   = INFINITY;
-            Self * closestTarget = nullptr;
+			if (dist > targetRange) {
+				// Target moved out of range
+				unsetTarget();
+			}
+		} else {
+			// Target dead
+			unsetTarget();
+		}
+	}
 
-            //if(0)
-            for ( Self & o : es ) {
-                if (this == &o)
-                    continue;
+	template<bool DoEarlyExit>
+	void Entity0::Targeting(const f32 targetRange, DynArray<Self> & es) // this Vector can not be const :(
+	{
+		// If no target, find a new target
+		if (hasTarget())
+			return;
 
-                if (!o.isAlive())
-                    continue;
+		f32    closestDist   = INFINITY;
+		Self * closestTarget = nullptr;
 
-                const f32 dist = calcDistTo( o );
+		//if(0)
+		for ( Self & o : es ) {
+			if (this == &o)
+				continue;
 
-                // Remember new best target
-                if (closestDist   > dist) {
-                    closestDist   = dist;
-                    closestTarget = &o; // safe?
-                }
+			if (!o.isAlive())
+				continue;
 
-                // Early exit, HACK: hotfix
-                if constexpr (DoEarlyExit)
-                    if (closestDist <= TargetRange)
-                        break;
-            }
+			const f32 dist = calcDistTo( o );
 
-            // New viable target
-            if (closestDist <= TargetRange) {
-                setTarget(closestTarget);
-            }
-        }
-    }
+			// Remember new best target
+			if (closestDist   > dist) {
+				closestDist   = dist;
+				closestTarget = &o; // safe?
+			}
+
+			// Early exit, HACK: hotfix
+			if constexpr (DoEarlyExit)
+				if (closestDist <= targetRange)
+					break;
+		}
+
+		// New viable target
+		if (closestDist <= targetRange) {
+			setTarget(closestTarget);
+		}
+	}
 
     void Entity0::Damaging(const f32 dt) {
         if (isAlive()) {
@@ -180,7 +185,7 @@ namespace JanSordid::ExampleDataModel
         }
     }
 
-    template void Entity0::Targeting<false>(const f32 TargetRange, Vector<Self> &es);
-    template void Entity0::Targeting<true> (const f32 TargetRange, Vector<Self> &es);
+	template void Entity0::Targeting<false>(const f32 TargetRange, DynArray<Self> &es);
+	template void Entity0::Targeting<true> (const f32 TargetRange, DynArray<Self> &es);
 }
 

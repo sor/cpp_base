@@ -45,6 +45,7 @@ endif()
 option( USE_DeployBinary    "Deploy the binary in the base directory"   OFF )   # For distribution of final product
 option( USE_FMT_HeaderOnly  "Use header-only implementation of FMT"     ON  )
 option( USE_NFD_Native      "Use native encoding in NFD"                OFF )
+option( USE_Unity_Builds    "Compile multiple source files at once"     OFF )
 
 option( USE_OpenMP          "Use OpenMP"        ON  )   # No-brain SIMD and MP
 option( USE_GTK             "Use GTK"           OFF )   # Cross platform GUI Toolkit
@@ -63,8 +64,8 @@ if( USE_OpenMP )
     find_package( OpenMP           REQUIRED )
 endif()
 if( USE_GTK )
-    find_package( PkgConfig REQUIRED )
-    pkg_check_modules( GTKMM_VARS REQUIRED IMPORTED_TARGET gtkmm-4.0 )
+    find_package( PkgConfig        REQUIRED )
+    pkg_check_modules( GTKMM_VARS  REQUIRED IMPORTED_TARGET gtkmm-4.0 )
 endif()
 
 # Why does MSVC exist, but not CLANG or GCC?
@@ -127,8 +128,8 @@ else()
     set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -Werror=deprecated-copy -Werror=deprecated-copy-dtor" )
     set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -Woverloaded-virtual" )
 
-    set( CMAKE_C_FLAGS       "${CMAKE_C_FLAGS}           -Wno-unknown-pragmas" )
-    set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}         -Wno-unknown-pragmas" )
+    set( CMAKE_C_FLAGS           "${CMAKE_C_FLAGS}           -Wno-unknown-pragmas" )
+    set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -Wno-unknown-pragmas" )
 
     if( GCC )
         set( CMAKE_C_FLAGS       "${CMAKE_C_FLAGS}           -Wshadow -Werror=shadow=local" )
@@ -183,6 +184,12 @@ else()
     # Only build for this machine
     set( CMAKE_C_FLAGS           "${CMAKE_C_FLAGS}           -march=native" )
     set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -march=native" )
+    #set( CMAKE_C_FLAGS           "${CMAKE_C_FLAGS}           -march=znver3" )
+    #set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -march=znver3" )
+    #set( CMAKE_C_FLAGS           "${CMAKE_C_FLAGS}           -march=nocona" )
+    #set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -march=nocona" )
+    #set( CMAKE_C_FLAGS           "${CMAKE_C_FLAGS}           -march=x86-64-v3" )
+    #set( CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -march=x86-64-v3" )
 
     if( CLANG )
         # Get messages from the vectorizer
@@ -214,6 +221,12 @@ if( FALSE )
     message("CMAKE_CXX_FLAGS_RELEASE        (Final)     is ${CMAKE_CXX_FLAGS_RELEASE}")
 endif ()
 
+#target_link_options(arena PRIVATE
+#    $<$<LINKER:LLD>:--icf=all>
+#    $<$<LINKER:Gold>:--icf=all>
+#    $<$<LINKER:MSVC>:/OPT:ICF>
+#)
+
 if( CMAKE_BUILD_TYPE MATCHES Debug
         OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo )
     message( STATUS "IPO / LTO disabled (only active in Final builds)" )
@@ -244,15 +257,24 @@ add_executable( bench
         src/global.hpp
 
         src/bench.cpp
+        src/bench.hpp
+        src/bench_oop.cpp
+        src/bench_proc.cpp
+        src/bench_procopt.cpp
+        src/bench_dod.cpp
+
         src/entity0.cpp
-        src/entity0.h
-        src/entity1.h
-        src/entity2.h
-        src/entity3.h
-        src/entity4.h
+        src/entity0.hpp
+        src/entity1.hpp
+        src/entity2.hpp
+        src/entity3.hpp
+        src/entity4.hpp
 )
 
+set_property(TARGET hello PROPERTY UNITY_BUILD ${USE_Unity_Builds})
 set_property(TARGET hello PROPERTY INTERPROCEDURAL_OPTIMIZATION ${USE_IPO})
+
+set_property(TARGET bench PROPERTY UNITY_BUILD ${USE_Unity_Builds})
 set_property(TARGET bench PROPERTY INTERPROCEDURAL_OPTIMIZATION ${USE_IPO})
 
 target_include_directories( hello

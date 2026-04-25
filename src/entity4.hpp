@@ -20,14 +20,14 @@ namespace JanSordid::ExampleDataModel
 		f32      velX, velY;
 	};
 	struct Entity4Target {
-		static constexpr u32 invalidID = std::numeric_limits<u32>::max();
+		static constexpr u32 InvalidID = std::numeric_limits<u32>::max();
 
 		u32      targetID;
 
-		bool     hasTarget() const { return targetID != invalidID; }
+		bool     hasTarget() const { return targetID != InvalidID; }
 
 		void     setTarget(u32 value) { targetID = value;     }
-		void     unsetTarget()        { targetID = invalidID; }
+		void     unsetTarget()        { targetID = InvalidID; }
 	};
 	struct Entity4Cooldown {
 		f32      cd;
@@ -46,13 +46,13 @@ namespace JanSordid::ExampleDataModel
 		u16      xp;
 	};
 
-	// Possible reunification in a single data structure to make working with it DoD'ed data easier
+	// Possible reunification in a single data structure to make working with DoD'ed data easier
 	struct Entity4 {
-		static Vector<Entity4Health>    * ehp;
-		static Vector<Entity4Transform> * etf;
-		static Vector<Entity4Target>    * etg;
-		static Vector<Entity4Cooldown>  * ecd;
-		static Vector<Entity4Cold>      * ecl;
+		static DynArray<Entity4Health>    * ehp;
+		static DynArray<Entity4Transform> * etf;
+		static DynArray<Entity4Target>    * etg;
+		static DynArray<Entity4Cooldown>  * ecd;
+		static DynArray<Entity4Cold>      * ecl;
 
 		u32 id;
 		bool     isAlive()   const { return (*ehp)[id].isAlive();   }

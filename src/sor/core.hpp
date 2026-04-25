@@ -1,14 +1,11 @@
 #pragma once
 
-//#define NFD_NATIVE 1
-
-// Activate this line to be able to put the executable in the root folder
-//#define DEPLOY
-
 #include <cmath>
 #include <cstdarg>
 #include <cstddef>
 #include <cassert>
+
+#include <version>
 
 #include <algorithm>
 #include <chrono>
@@ -21,18 +18,9 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <span>
 
-#if defined( __cpp_lib_format ) && defined( __cpp_lib_print )
-	#include <format>
-	#include <print>
-#else
-	#include <fmt/core.h>   // https://fmt.dev/latest/index.html
-#endif
+#include "adapt_std.hpp"
 
-#include <nlohmann/json.hpp>
-
-#include <nfd.hpp>
 
 #ifdef DEPLOY_BINARY
 	#define BasePath ""
@@ -56,9 +44,15 @@ constexpr void MyAssert( T condition, const char * msg) {
 }
 */
 
+// throw only happens during compilation, this is necessary for constexpr scopes, as asserts are not possible there
+#define assertCE(expr)                                                         \
+	(std::is_constant_evaluated() && !static_cast<bool>(expr)                  \
+		? throw std::logic_error( "Assertion failed in constant expression!" ) \
+		: assert(expr))
+
 #if defined( _DEBUG )
-	#define Assert(            ... ) assert( __VA_ARGS__ )
-	#define AssertInOptimized( ... ) assert( __VA_ARGS__ )
+	#define Assert(            ... ) assertCE( __VA_ARGS__ )
+	#define AssertInOptimized( ... ) assertCE( __VA_ARGS__ )
 	#define DebugOnly(         ... ) __VA_ARGS__
 	#define OptimizedOnly(     ... )
 	#define FinalOnly(         ... )
@@ -67,8 +61,8 @@ constexpr void MyAssert( T condition, const char * msg) {
 	#define IfFinal     if constexpr( false )
 	#define IfNotFinal  if constexpr( true  )
 #elif defined( OPTIMIZED )
-	#define Assert(            ... )
-	#define AssertInOptimized( ... ) assert( __VA_ARGS__ )
+	#define Assert(            ... ) do{ (void)sizeof((__VA_ARGS__)); } while( 0 )
+	#define AssertInOptimized( ... ) assertCE( __VA_ARGS__ )
 	#define DebugOnly(         ... )
 	#define OptimizedOnly(     ... ) __VA_ARGS__
 	#define FinalOnly(         ... )
@@ -77,8 +71,8 @@ constexpr void MyAssert( T condition, const char * msg) {
 	#define IfFinal     if constexpr( false )
 	#define IfNotFinal  if constexpr( true  )
 #elif defined( FINAL )
-	#define Assert(            ... )
-	#define AssertInOptimized( ... )
+	#define Assert(            ... ) do{ (void)sizeof((__VA_ARGS__)); } while( 0 )
+	#define AssertInOptimized( ... ) do{ (void)sizeof((__VA_ARGS__)); } while( 0 )
 	#define DebugOnly(         ... )
 	// Final also counts as an Optimized build, therefore the OptimizedOnly define is active
 	#define OptimizedOnly(     ... ) __VA_ARGS__
@@ -92,37 +86,13 @@ constexpr void MyAssert( T condition, const char * msg) {
 #endif
 
 
-/// Polyfills for disabled functionality
-
-#if ! __cpp_rtti
-	// If -fno-rtti, try replacing dynamic_cast with static_cast
-	// If this works, then the original code should probably be changed
-	#define dynamic_cast static_cast
-#endif
-
-#if ! __cpp_exceptions
-	// If -fno-exceptions, transform error handling code to work without it.
-	#define try      if constexpr( true )
-	#define catch(X) if constexpr( false )
-	#define throw    /* HACK: Come up with a solution for throw */
-#endif
-
-// Ubiquitous file format
-using JSON = nlohmann::json;
-
-// Monkey-patching NFD
-namespace NFD
-{
-	constexpr const nfdfilteritem_t * EmptyFilter      = nullptr;
-	constexpr const nfdchar_t       * EmptyDefaultPath = nullptr;
-	constexpr const nfdchar_t       * EmptyDefaultName = nullptr;
-
-	using Result = nfdresult_t;
-}
-
 namespace JanSordid::Core
 {
 	/// Aliases of a lot of std:: for easy usage
+
+	namespace Chrono         { using namespace std::chrono;          }
+	namespace ChronoLiterals { using namespace std::chrono_literals; }
+	namespace Numbers        { using namespace std::numbers;         }
 
 	// Usage of `int` and `uint` conveys:
 	//  I don't mind about the size, don't use for preserved data (structs, classes, globals)
@@ -138,7 +108,10 @@ namespace JanSordid::Core
 	using u32   = std::uint32_t;
 	using u64   = std::uint64_t;
 
-	using isize = std::ptrdiff_t;
+//	using iptr  = std::intptr_t; // Kind of the same as below
+//	using uptr  = std::uintptr_t;
+
+	using idiff = std::ptrdiff_t; // or isize?
 	using usize = std::size_t;
 
 	using byte  = std::byte;
@@ -159,31 +132,22 @@ namespace JanSordid::Core
 	// Functions
 	using std::min;
 	using std::max;
-	using std::forward;
 	using std::move;
+	using std::forward;
 	using std::make_unique;
 	using std::make_shared;
 
 	// Templates
-	template<typename T, usize Size>                       using Array     = std::array<T, Size>;
-	template<typename T>                                   using DynArray  = std::vector<T>;
-	template<typename T>                                   using Vector    = std::vector<T>;
-	template<typename T>                                   using HashSet   = std::unordered_set<T>;
-	template<typename TKey, typename TValue>               using HashMap   = std::unordered_map<TKey,TValue>;
-//	template<typename T, usize Size = std::dynamic_extent> using Span      = std::span<T, Size>;
+	template<typename T, usize Size>            using Array     = std::array<T, Size>;
+	template<typename T>                        using DynArray  = std::vector<T>;
+//	template<typename T>                        using Vector    = std::vector<T>;
+	template<typename T>                        using HashSet   = std::unordered_set<T>;
+	template<typename TKey, typename TValue>    using HashMap   = std::unordered_map<TKey,TValue>;
 
-	template<typename T>                                           using RawPtr    = T*;
-	template<typename T, typename TDel = std::default_delete<T>>   using UniquePtr = std::unique_ptr<T,TDel>;
-	template<typename T>                                           using SharedPtr = std::shared_ptr<T>;
-	template<typename T>                                           using WeakPtr   = std::weak_ptr<T>;
-
-
-	// String formatting
-#if defined( __cpp_lib_format ) && defined( __cpp_lib_print )
-	using std::print, std::println, std::format, std::format_string;
-#else
-	using fmt::print, fmt::println, fmt::format, fmt::format_string;
-#endif
+	template<typename T>                                            using RawPtr    = T*;
+	template<typename T, typename TDel = std::default_delete<T>>    using UniquePtr = std::unique_ptr<T,TDel>;
+	template<typename T>                                            using SharedPtr = std::shared_ptr<T>;
+	template<typename T>                                            using WeakPtr   = std::weak_ptr<T>;
 
 	namespace ChronoLiterals { using namespace std::chrono_literals; }
 	namespace Numbers        { using namespace std::numbers;         }
@@ -191,8 +155,8 @@ namespace JanSordid::Core
 	template <typename... T>
 	inline void print_once( format_string<T...> fmt, T && ... args )
 	{
-		static std::unordered_set<String> all;
-		const String msg = format( fmt, forward<T>( args )... );
+		static std::unordered_set<std::string> all;
+		const std::string msg = format( fmt, forward<T>( args )... );
 		if( all.find( msg ) == all.end() )
 		{
 			all.insert( msg );

@@ -10,16 +10,16 @@ namespace JanSordid::ExampleDataModel
 
 		String   name;
 
-		Self *   target;
+		Self *   target;	// TODO: Also change to be an targetID
 
 		f32      posX, posY;
 		f32      velX, velY;
+	private:
+		f32      cd; // cooldownOrRespawn;
 
-		f32      cd;
-
+	public:
 		u16      health;
 		u16      xp;
-
 
 
 
