@@ -3,20 +3,21 @@
 #include <variant>
 #include <span>
 
+#if USE_GTK
 #include <gtkmm.h>
-
+#endif
 
 using namespace JanSordid::Core;
 
 template <typename T, T v>
 struct IntegralConstant
 {
-    static constexpr T value = v;
-    using value_type = T;
-    using type       = IntegralConstant<T, v>;
+	static constexpr T value = v;
+	using value_type = T;
+	using type       = IntegralConstant<T, v>;
 
-    constexpr operator value_type  () const noexcept { return value; }
-    constexpr value_type operator()() const noexcept { return value; }
+	constexpr operator value_type  () const noexcept { return value; }
+	constexpr value_type operator()() const noexcept { return value; }
 };
 
 using TrueType  = IntegralConstant<bool, true>;
@@ -98,37 +99,37 @@ template <typename TK>
 class MyThing
 {
 public:
-    TK member = 1;
+	TK member = 1;
 
-    void func()
-    {
-        member = member % 10;
-    }
-    void func2()
-    {
-        member = member * 2;
-    }
+	void func()
+	{
+		member = member % 10;
+	}
+	void func2()
+	{
+		member = member * 2;
+	}
 };
 
 template<>
 void MyThing<float>::func()
 {
-    member = (int)member % 10;
+	member = (int)member % 10;
 }
 /*
 template <typename TKV>
 class MyThing<TKV, TKV>
 {
 public:
-    float member = 1;
-    float member2 = 1;
+	float member = 1;
+	float member2 = 1;
 
-    template<typename X>
-    void func(X x)
-    {
-        member = (int)member % 10;
-        func2();
-    }
+	template<typename X>
+	void func(X x)
+	{
+		member = (int)member % 10;
+		func2();
+	}
 };
 */
 
@@ -149,67 +150,67 @@ int emptyIntFunc() {
 
 struct Point
 {
-    f32 x, y;
+	f32 x, y;
 
-    bool operator<(const Point& other)
-    {
-        return this->x < other.x;
-    }
+	bool operator<(const Point& other)
+	{
+		return this->x < other.x;
+	}
 
-    static bool sortByX(const Point& left, const Point& right)
-    {
-        return left.x == right.x
-             ? left.y < right.y
-             : left.x < right.x;
-    }
+	static bool sortByX(const Point& left, const Point& right)
+	{
+		return left.x == right.x
+			 ? left.y < right.y
+			 : left.x < right.x;
+	}
 
-    static bool sortByY(const Point& left, const Point& right)
-    {
-        return left.y < right.y;
-    }
+	static bool sortByY(const Point& left, const Point& right)
+	{
+		return left.y < right.y;
+	}
 };
 
 
 template <typename T>
 class FrameAlloc {
-    static T  pool[1024*1024];
-    static T* pos = &pool;
-    constexpr T * allocate(size_t n) {
-        const size_t newPos = pos + n;
-        assert( newPos < pool+(sizeof(pool)/sizeof(*pool)) );
-        T* ret = pos;
-        pos = newPos;
-        return ret;
-    }
-    void deallocate(T* p, size_t n) {
-        // Maybe call the destructor?
+	static T  pool[1024*1024];
+	static T* pos = &pool;
+	constexpr T * allocate(size_t n) {
+		const size_t newPos = pos + n;
+		assert( newPos < pool+(sizeof(pool)/sizeof(*pool)) );
+		T* ret = pos;
+		pos = newPos;
+		return ret;
+	}
+	void deallocate(T* p, size_t n) {
+		// Maybe call the destructor?
 		// But no need to deallocate
-    }
-    void reset() {
-        pos = &pool;
-    }
+	}
+	void reset() {
+		pos = &pool;
+	}
 };
 
-#ifdef GTKMM_MAJOR_VERSION
+#ifdef USE_GTK
 class MyWindow : public Gtk::Window
 {
-    Gtk::Label label;
+	Gtk::Label label;
 
 public:
-    MyWindow()
-        : label( "Testomania" )
-    {
-        set_title( "Basic application" );
-        set_default_size( 200, 200 );
-        set_child( label );
-    }
+	MyWindow()
+		: label( format("{1:#x} // {0} // {1}", "Testomania", (uintptr_t)this) )
+	{
+		set_title( "Basic application" );
+		set_default_size( 600, 300 );
+		set_child( label );
+	}
 };
 #endif
 
 
 int main( [[maybe_unused]] int argc, [[maybe_unused]] char * argv[] )
 {
-#ifdef GTKMM_MAJOR_VERSION
+#ifdef USE_GTK
 	SharedPtr<Gtk::Application> app = Gtk::Application::create( "de.sordid.examples" );
 	app->make_window_and_run<MyWindow>( argc, argv );
 #endif
@@ -260,11 +261,11 @@ int main( [[maybe_unused]] int argc, [[maybe_unused]] char * argv[] )
 
 	const u8 answer = 0b101010;
 	print( "Hello {0}{1}\nThe answer is {2}, not {3} (short: {3:1.3}).\n",
-	       "World", "!", answer, std::numbers::pi_v<float> );
+		   "World", "!", answer, std::numbers::pi_v<float> );
 
 	enum class A : size_t { A };
 	std::tuple<int> ti;
-	std::get<std::to_underlying( A::A )>( ti );
+	std::get<to_underlying( A::A )>( ti );
 
 	IfNotFinal print( "\U0001F44B{1}{0}\n\n", "!", "\U0001F30D" );
 

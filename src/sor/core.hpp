@@ -5,8 +5,6 @@
 #include <cstddef>
 #include <cassert>
 
-#include <version>
-
 #include <algorithm>
 #include <chrono>
 #include <fstream>

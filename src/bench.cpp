@@ -1,6 +1,6 @@
 #include "bench.hpp"
 
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 #include "entity0.hpp"
 #include "entity1.hpp"

@@ -19,6 +19,7 @@
     },
     {
       "name": "nlohmann-json"
-    }
+    },
+    { "name": "dbus", "platform": "linux", "default-features": false, "features": [ "x11" ] }
   ]
 }
